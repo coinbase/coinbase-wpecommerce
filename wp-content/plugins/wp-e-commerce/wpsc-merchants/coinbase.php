@@ -111,7 +111,7 @@ function form_coinbase_wpe() {
 				<li>Name: a name for this WP e-Commerce installation.</li>
 				<li>Redirect URL: <input type='text' value='$redirectUrl' readonly></li>
 			</ul>
-			Then, copy the generated Client ID and Client Secret below.";
+			Then, copy the generated Client ID and Client Secret below. <b>After saving, return to this page to finish connecting a merchant account!</b>";
 		} else {
 			$account .= "Valid Client ID and Client Secret entered. <a href='$authorize'>Click here to connect a merchant account.</a>";
 		}
