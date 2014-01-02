@@ -31,7 +31,7 @@ function gateway_coinbase_wpe($separator, $sessionid) {
         $currencyId = get_option('currency_type');
         $currency = $wpdb->get_var($wpdb->prepare("SELECT `code` FROM `".WPSC_TABLE_CURRENCY_LIST."` WHERE `id` = %d LIMIT 1", $currencyId));
         $amount = $wpsc_cart->total_price;
-        $name = "Order #" . $sessionid;
+        $name = "Your Order";
         $custom = $sessionid;
         
         $params = array (
@@ -39,7 +39,7 @@ function gateway_coinbase_wpe($separator, $sessionid) {
         	'callback_url' => get_option('siteurl') . "/?coinbase_callback=$callbackSecret",
         	'success_url' => add_query_arg('sessionid', $sessionid, get_option('transact_url')) . "&coinbase_order",
         	'info_url' => get_option('siteurl'),
-        	'cancel_url' => get_option('siteurl'),
+        	'cancel_url' => get_option('siteurl') . "?coinbase_order",
         );
         
         try {
@@ -186,6 +186,23 @@ function coinbase_wpe_callback() {
 		update_option("coinbase_wpe_tokens", serialize($tokens));
 	} else if (isset($_GET['coinbase_order'])) {
 		unset($_GET['order']);
+	} else if($_GET['coinbase_callback'] == get_option("coinbase_wpe_callbacksecret")) {
+		
+		
+		require_once(dirname(__FILE__) . "/coinbase-php/Coinbase.php");
+		
+		$postBody = json_decode(file_get_contents("php://input"));
+		$coinbaseOrderId = $postBody->order->id;
+		$sessionid = $postBody->order->custom;
+		
+		// Save order information
+		$data = array(
+			'processed'  => 3,
+			'date'       => time(),
+			'transactid' => $coinbaseOrderId,
+		);
+		wpsc_update_purchase_log_details( $sessionid, $data, 'sessionid' );
+		transaction_results($sessionid, false);
 	}
 }
 
