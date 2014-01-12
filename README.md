@@ -13,6 +13,6 @@ If you don't have a Coinbase account, sign up at https://coinbase.com/merchants.
 
 After copying the files, open the Wordpress dashboard and navigate to Settings > Store. Click the "Payments" tab and then click on "Settings" under "Coinbase."
 
-!(Setup)[http://i.imgur.com/D4oAtzY.png]
+![Setup](http://i.imgur.com/D4oAtzY.png)
 
-Then follow the instructions on connecting a merchant account.
+Then follow the instructions to connect a merchant account.
