@@ -32,7 +32,7 @@ function gateway_coinbase_wpe($separator, $sessionid) {
         $currency = $wpdb->get_var($wpdb->prepare("SELECT `code` FROM `".WPSC_TABLE_CURRENCY_LIST."` WHERE `id` = %d LIMIT 1", $currencyId));
         $amount = $wpsc_cart->total_price;
         $name = "Your Order";
-        $custom = $sessionid;
+        $custom = base64_encode(serialize(array("sessionid" => $sessionid, "secret" => $callbackSecret)));
         
         $params = array (
         	'description' => $name,
@@ -40,6 +40,7 @@ function gateway_coinbase_wpe($separator, $sessionid) {
         	'success_url' => add_query_arg('sessionid', $sessionid, get_option('transact_url')) . "&coinbase_order",
         	'info_url' => get_option('siteurl'),
         	'cancel_url' => get_option('siteurl') . "?coinbase_order",
+                'custom_secure' => true,
         );
         
         try {
@@ -193,13 +194,29 @@ function coinbase_wpe_callback() {
 		
 		$postBody = json_decode(file_get_contents("php://input"));
 		$coinbaseOrderId = $postBody->order->id;
-		$sessionid = $postBody->order->custom;
 		
-		// Save order information
+		// 1. Download order data from Coinbase
+		$clientId = get_option("coinbase_wpe_clientid");
+		$clientSecret = get_option("coinbase_wpe_clientsecret");
+		$redirectUrl = get_option("coinbase_wpe_oauthredirect");
+		$oauth = new Coinbase_OAuth($clientId, $clientSecret, $redirectUrl);
+	        $tokens = unserialize(get_option("coinbase_wpe_tokens"));
+		$coinbase = new Coinbase($oauth, $tokens);
+		$order = $coinbase->getOrder($coinbaseOrderId);
+
+		// 2. Verify callback is legitimate
+		$meta = unserialize(base64_decode($order->custom));
+		if ($meta['secret'] != get_option("coinbase_wpe_callbacksecret")) {
+		  // Callback not legitmate
+		  die("Malicious callback");
+		}
+		$sessionid = $meta['sessionid'];
+
+		// 3. Callback is legitimate - process order.
 		$data = array(
 			'processed'  => 3,
 			'date'       => time(),
-			'transactid' => $coinbaseOrderId,
+			'transactid' => "Coinbase order " . $coinbaseOrderId,
 		);
 		wpsc_update_purchase_log_details( $sessionid, $data, 'sessionid' );
 		transaction_results($sessionid, false);
