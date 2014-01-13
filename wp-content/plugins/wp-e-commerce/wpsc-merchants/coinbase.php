@@ -66,7 +66,7 @@ function gateway_coinbase_wpe($separator, $sessionid) {
 
                 // Show failure message
 		$msg = $e->getMessage();
-		$_SESSION['WpscGatewayErrorMessage'] = "There was an error while processing your transaction. Try another payment method. $msg";
+		$_SESSION['WpscGatewayErrorMessage'] = "There was an error while processing your transaction. Try another payment method. Make sure you've connected a merchant account in Coinbase settings. $msg";
         	header("Location: " . get_option('checkout_url'));
         	exit();
         }
